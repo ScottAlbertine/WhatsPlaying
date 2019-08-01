@@ -1,42 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-			 xmlns:tools="http://schemas.android.com/tools"
-			 android:layout_width="match_parent"
-			 android:layout_height="match_parent"
-			 android:background="#000000"
-			 tools:context=".FullscreenActivity">
-
-	<!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
-	<TextView android:id="@+id/artistName"
-			  android:layout_width="match_parent"
-			  android:layout_height="match_parent"
-			  android:keepScreenOn="true"
-			  android:textColor="#ffffff"
-			  android:textStyle="bold"
-			  android:textSize="50sp"
-			  android:gravity="top"
-			  android:text="@string/artistName"/>
-
-	<TextView android:id="@+id/albumName"
-			  android:layout_width="match_parent"
-			  android:layout_height="match_parent"
-			  android:keepScreenOn="true"
-			  android:textColor="#ffffff"
-			  android:textStyle="bold"
-			  android:textSize="50sp"
-			  android:gravity="center"
-			  android:text="@string/albumName"/>
-
-	<TextView android:id="@+id/trackName"
-			  android:layout_width="match_parent"
-			  android:layout_height="match_parent"
-			  android:keepScreenOn="true"
-			  android:textColor="#ffffff"
-			  android:textStyle="bold"
-			  android:textSize="50sp"
-			  android:gravity="bottom"
-			  android:text="@string/trackName"/>
-
-</FrameLayout>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+											 xmlns:app="http://schemas.android.com/apk/res-auto"
+											 xmlns:tools="http://schemas.android.com/tools"
+											 android:layout_width="match_parent"
+											 android:layout_height="match_parent"
+											 android:background="#000000"
+											 tools:context=".FullscreenActivity"
+											 android:id="@+id/mainLayout">
+	<ImageView
+			android:layout_width="0dp"
+			android:layout_height="0dp" app:srcCompat="@mipmap/sampleart"
+			android:id="@+id/albumArt"
+			android:contentDescription="@string/albumArt"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintDimensionRatio="1:1"
+	/>
+	<TextView
+			android:text="@string/trackName"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content" android:id="@+id/trackName"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="8dp"
+			android:fontFamily="sans-serif-medium" android:textSize="75sp" android:textColor="#FFFFFF"
+			app:layout_constraintHorizontal_bias="0.0" android:layout_marginStart="8dp" android:layout_marginTop="8dp"
+			android:shadowColor="#000000" android:shadowRadius="10" android:shadowDy="0" android:shadowDx="0"/>
+	<SeekBar
+			android:layout_width="0dp"
+			android:layout_height="0dp"
+			android:id="@+id/volumeBar"
+			android:layout_marginTop="8dp"
+			app:layout_constraintTop_toBottomOf="@+id/trackName" android:layout_marginBottom="8dp"
+			app:layout_constraintBottom_toTopOf="@+id/artistName" app:layout_constraintEnd_toEndOf="parent"
+			android:layout_marginEnd="8dp"
+			android:progress="95" app:layout_constraintStart_toEndOf="@+id/albumArt" android:layout_marginStart="8dp"
+			app:layout_constraintDimensionRatio="1:1" android:rotation="270"
+	/>
+	<TextView
+			android:text="@string/artistName"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/artistName" android:layout_marginStart="8dp"
+			app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+			android:layout_marginEnd="8dp" android:fontFamily="sans-serif-medium" android:textSize="50sp"
+			android:layout_marginBottom="8dp" app:layout_constraintBottom_toTopOf="@+id/seekBar"
+			app:layout_constraintHorizontal_bias="0.0" android:textColor="#FFFFFF" android:shadowDx="0"
+			android:shadowDy="0" android:shadowRadius="10" android:shadowColor="#000000"/>
+	<ProgressBar
+			style="?android:attr/progressBarStyleHorizontal"
+			android:layout_width="0dp"
+			android:layout_height="wrap_content"
+			android:id="@+id/seekBar"
+			app:layout_constraintStart_toStartOf="parent"
+			android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent" android:progress="95"/>
+</android.support.constraint.ConstraintLayout>
