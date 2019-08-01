@@ -1,11 +1,14 @@
 package com.example.whatsplaying.adapter;
 
+import android.content.Intent;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import com.example.whatsplaying.R;
+import com.example.whatsplaying.activity.NowPlayingActivity;
 import com.example.whatsplaying.dto.Chromecast;
 
 import java.util.ArrayList;
@@ -18,8 +21,8 @@ public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<Chromecas
 
 	private List<Chromecast> chromecasts = new ArrayList<>();
 
-	public void addChromecast(Chromecast chromecast) {
-		chromecasts.add(chromecast);
+	public void addChromecast(Chromecast chromeCast) {
+		chromecasts.add(chromeCast);
 		notifyItemInserted(chromecasts.size() - 1);
 	}
 
@@ -31,8 +34,16 @@ public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<Chromecas
 	}
 
 	@Override
-	public void onBindViewHolder(ChromecastViewHolder holder, int position) {
-		holder.nameView.setText(chromecasts.get(position).name);
+	public void onBindViewHolder(final ChromecastViewHolder holder, int position) {
+		final Chromecast chromecast = chromecasts.get(position);
+		holder.nameView.setText(chromecast.name);
+		holder.nameView.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				Intent intent = new Intent(holder.layout.getContext(), NowPlayingActivity.class);
+				intent.putExtra("ip", chromecast.ip.getHostAddress());
+				holder.layout.getContext().startActivity(intent);
+			}
+		});
 	}
 
 	public int getItemCount() {
