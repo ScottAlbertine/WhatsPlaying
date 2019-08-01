@@ -1,4 +1,4 @@
-package com.example.whatsplaying;
+package com.example.whatsplaying.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
@@ -7,12 +7,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import com.example.whatsplaying.R;
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- */
-public class FullscreenActivity extends AppCompatActivity {
+public class NowPlayingActivity extends AppCompatActivity {
 
 	private ImageView albumArtView;
 	private TextView artistNameView;
@@ -24,13 +21,14 @@ public class FullscreenActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.activity_fullscreen);
+		setContentView(R.layout.now_playing);
 
 		albumArtView = findViewById(R.id.albumArt);
 		artistNameView = findViewById(R.id.artistName);
 		trackNameView = findViewById(R.id.trackName);
 		seekBar = findViewById(R.id.seekBar);
 		volumeBar = findViewById(R.id.volumeBar);
+
 	}
 
 	@Override
@@ -47,9 +45,5 @@ public class FullscreenActivity extends AppCompatActivity {
 											| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 											| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 											| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-
-		//set up actual stuff
-		int blah = 5;
-
 	}
 }

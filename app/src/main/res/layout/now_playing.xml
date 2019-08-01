@@ -5,7 +5,7 @@
 											 android:layout_width="match_parent"
 											 android:layout_height="match_parent"
 											 android:background="#000000"
-											 tools:context=".FullscreenActivity"
+											 tools:context=".activity.NowPlayingActivity"
 											 android:id="@+id/mainLayout">
 	<ImageView
 			android:layout_width="0dp"
@@ -35,9 +35,10 @@
 			app:layout_constraintTop_toBottomOf="@+id/trackName" android:layout_marginBottom="8dp"
 			app:layout_constraintBottom_toTopOf="@+id/artistName" app:layout_constraintEnd_toEndOf="parent"
 			android:layout_marginEnd="8dp"
-			android:progress="84" app:layout_constraintStart_toEndOf="@+id/albumArt" android:layout_marginStart="8dp"
+			android:progress="84"
 			app:layout_constraintDimensionRatio="1:1"
-			android:progressDrawable="@drawable/volume_knob" style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+			android:progressDrawable="@drawable/volume_knob" style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+			app:layout_constraintStart_toEndOf="@+id/albumArt" android:layout_marginStart="8dp"/>
 	<TextView
 			android:text="@string/artistName"
 			android:layout_width="wrap_content"
@@ -56,4 +57,5 @@
 			app:layout_constraintStart_toStartOf="parent"
 			android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintEnd_toEndOf="parent" android:progress="95" android:progressTint="#ffffff"/>
+
 </android.support.constraint.ConstraintLayout>

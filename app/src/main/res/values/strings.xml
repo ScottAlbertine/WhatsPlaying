@@ -6,4 +6,5 @@
 	<string name="artistName">Big long honkin Artist Name</string>
 	<string name="trackName">Track Name here</string>
 	<string name="albumArt">Album Art</string>
+	<string name="media_route_menu_title">Media Route Menu</string>
 </resources>
