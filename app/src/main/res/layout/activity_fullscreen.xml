@@ -27,7 +27,7 @@
 			android:fontFamily="sans-serif-medium" android:textSize="75sp" android:textColor="#FFFFFF"
 			app:layout_constraintHorizontal_bias="0.0" android:layout_marginStart="8dp" android:layout_marginTop="8dp"
 			android:shadowColor="#000000" android:shadowRadius="10" android:shadowDy="0" android:shadowDx="0"/>
-	<SeekBar
+	<ProgressBar
 			android:layout_width="0dp"
 			android:layout_height="0dp"
 			android:id="@+id/volumeBar"
@@ -35,9 +35,9 @@
 			app:layout_constraintTop_toBottomOf="@+id/trackName" android:layout_marginBottom="8dp"
 			app:layout_constraintBottom_toTopOf="@+id/artistName" app:layout_constraintEnd_toEndOf="parent"
 			android:layout_marginEnd="8dp"
-			android:progress="95" app:layout_constraintStart_toEndOf="@+id/albumArt" android:layout_marginStart="8dp"
-			app:layout_constraintDimensionRatio="1:1" android:rotation="270"
-	/>
+			android:progress="84" app:layout_constraintStart_toEndOf="@+id/albumArt" android:layout_marginStart="8dp"
+			app:layout_constraintDimensionRatio="1:1"
+			android:progressDrawable="@drawable/volume_knob" style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
 	<TextView
 			android:text="@string/artistName"
 			android:layout_width="wrap_content"
@@ -55,5 +55,5 @@
 			android:id="@+id/seekBar"
 			app:layout_constraintStart_toStartOf="parent"
 			android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintEnd_toEndOf="parent" android:progress="95"/>
+			app:layout_constraintEnd_toEndOf="parent" android:progress="95" android:progressTint="#ffffff"/>
 </android.support.constraint.ConstraintLayout>
