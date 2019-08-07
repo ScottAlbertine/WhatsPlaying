@@ -9,15 +9,26 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.whatsplaying.R;
-import com.example.whatsplaying.Utils;
 import su.litvak.chromecast.api.v2.*;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import static com.example.whatsplaying.Utils.runInNewThread;
+
+/**
+ * Shows what's playing on a given chromecast.
+ * Must be launched with the index of the chromecast (in the ChromeCasts singleton's list of chromecasts) passed in the intent, using the {@link #INDEX_KEY} extra.
+ *
+ * @author Scott Albertine
+ */
 public class NowPlayingActivity extends AppCompatActivity {
+
+	/** The key to use, in the intent's extras, to pass the numeric index of the chromecast we want to show. */
+	public static final String INDEX_KEY = "com.example.whatsplaying.ccIndex";
 
 	private ImageView albumArtView;
 	private TextView artistNameView;
@@ -31,8 +42,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		int index = getIntent().getExtras().getInt("com.example.whatsplaying.ccIndex");
-		chromecast = ChromeCasts.get().get(index);
+		//get the appropriate chromecast, safely.
+		chromecast = ChromeCasts.get().get(Objects.requireNonNull(getIntent().getExtras()).getInt(INDEX_KEY));
 
 		setContentView(R.layout.now_playing);
 
@@ -47,7 +58,50 @@ public class NowPlayingActivity extends AppCompatActivity {
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-		//go fullscreen
+		goFullscreen();
+		runInNewThread(() -> {
+			try {
+				chromecast.connect();
+				chromecast.registerListener((ChromeCastSpontaneousEvent event) -> {
+					switch (event.getType()) {
+						case MEDIA_STATUS:
+							showMediaStatus((MediaStatus) event.getData());
+							break;
+						case STATUS:
+							showStatus((Status) event.getData());
+							break;
+						case APPEVENT:
+							break;
+						case CLOSE:
+							break;
+						case UNKNOWN:
+							break;
+					}
+				});
+				showMediaStatus(chromecast.getMediaStatus()); //initial population
+				showStatus(chromecast.getStatus());
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (GeneralSecurityException e) {
+				e.printStackTrace();
+			}
+		});
+
+		//For now, this seems to fix the "chromecast won't notify us of media info" problem
+		//TODO: figure out a better way to do this so we don't have to tap on the screen
+		volumeBar.setOnClickListener((View v) -> runInNewThread(() -> {
+			try {
+				showMediaStatus(chromecast.getMediaStatus());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}));
+	}
+
+	/**
+	 * Go fullscreen.
+	 */
+	private void goFullscreen() {
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
 			actionBar.hide();
@@ -58,76 +112,55 @@ public class NowPlayingActivity extends AppCompatActivity {
 											| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 											| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 											| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-		Utils.runInNewThread(new Runnable() {
-			public void run() {
-				try {
-					chromecast.connect();
-					chromecast.registerListener(new ChromeCastSpontaneousEventListener() {
-						public void spontaneousEventReceived(ChromeCastSpontaneousEvent event) {
-							switch (event.getType()) {
-								case MEDIA_STATUS:
-									showMediaStatus((MediaStatus) event.getData());
-									break;
-								case STATUS:
-									showStatus((Status) event.getData());
-									break;
-								case APPEVENT:
-									break;
-								case CLOSE:
-									break;
-								case UNKNOWN:
-									break;
-							}
-						}
-					});
-					showMediaStatus(chromecast.getMediaStatus()); //initial population
-					showStatus(chromecast.getStatus());
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (GeneralSecurityException e) {
-					e.printStackTrace();
-				}
-			}
-		});
 	}
 
-	public void showMediaStatus(final MediaStatus mediaStatus) {
-		runOnUiThread(new Runnable() {
-			public void run() {
-				Media media = mediaStatus.media;
-				if (media != null) { //we often get partial objects, only use the parts we get.
-					Map<String, Object> metadata = media.metadata;
-					if (metadata != null) {
-						String title = (String) metadata.get("title");
-						if (title != null) {
-							trackNameView.setText(title);
-						}
-						String artist = (String) metadata.get("artist");
-						if (artist != null) {
-							artistNameView.setText(artist);
-						}
-						List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
-						if (images != null) {
-							Map<String, Object> image = images.get(0);
-							if (image != null) {
-								String url = (String) image.get("url");
-								if (url != null) {
-									Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
-								}
+	/**
+	 * Update the UI to show the given media status.
+	 *
+	 * @param mediaStatus duh
+	 */
+	private void showMediaStatus(MediaStatus mediaStatus) {
+		runOnUiThread(() -> {
+			Media media = mediaStatus.media;
+			if (media != null) { //we often get partial objects, only use the parts we get.
+				if (media.duration != null) {
+					//noinspection NumericCastThatLosesPrecision On purpose
+					seekBar.setProgress((int) ((mediaStatus.currentTime / media.duration) * 100));
+				}
+				Map<String, Object> metadata = media.metadata;
+				if (metadata != null) {
+					CharSequence title = (CharSequence) metadata.get("title");
+					if (title != null) {
+						trackNameView.setText(title);
+					}
+					CharSequence artist = (CharSequence) metadata.get("artist");
+					if (artist != null) {
+						artistNameView.setText(artist);
+					}
+					//TODO: check this cast, and the others, write the really annoying if/then blocks we need
+					//noinspection unchecked
+					List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
+					if (images != null) {
+						Map<String, Object> image = images.get(0);
+						if (image != null) {
+							String url = (String) image.get("url");
+							if (url != null) {
+								Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
 							}
 						}
-						seekBar.setProgress((int) ((mediaStatus.currentTime / media.duration) * 100));
 					}
 				}
 			}
 		});
 	}
 
-	public void showStatus(final Status status) {
-		runOnUiThread(new Runnable() {
-			public void run() {
-				volumeBar.setProgress((int) (status.volume.level * 100));
-			}
-		});
+	/**
+	 * Update the UI to show the given device status.
+	 *
+	 * @param status duh
+	 */
+	private void showStatus(Status status) {
+		//noinspection NumericCastThatLosesPrecision On purpose
+		runOnUiThread(() -> volumeBar.setProgress((int) (status.volume.level * 100)));
 	}
 }

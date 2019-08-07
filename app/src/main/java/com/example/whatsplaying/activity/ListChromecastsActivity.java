@@ -43,32 +43,21 @@ public class ListChromecastsActivity extends AppCompatActivity implements Chrome
 		chromecastRecyclerView.setAdapter(adapter);
 
 		ChromeCasts.registerListener(this);
-		Utils.runInNewThread(new Runnable() { //no networking on main thread
-			public void run() {
-				try {
-					ChromeCasts.startDiscovery(getMyIp());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		Utils.runInNewThread(() -> { //no networking on main thread
+			try {
+				ChromeCasts.startDiscovery(getMyIp());
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		});
 	}
 
 	public void newChromeCastDiscovered(ChromeCast chromeCast) {
-		final int index = ChromeCasts.get().indexOf(chromeCast);
-		runOnUiThread(new Runnable() {
-			public void run() {
-				adapter.notifyItemInserted(index);
-			}
-		});
+		runOnUiThread(() -> adapter.notifyItemInserted(ChromeCasts.get().indexOf(chromeCast)));
 	}
 
 	public void chromeCastRemoved(ChromeCast chromeCast) {
-		runOnUiThread(new Runnable() {
-			public void run() {
-				adapter.notifyDataSetChanged();
-			}
-		});
+		runOnUiThread(adapter::notifyDataSetChanged);
 	}
 
 	private InetAddress getMyIp() throws UnknownHostException {

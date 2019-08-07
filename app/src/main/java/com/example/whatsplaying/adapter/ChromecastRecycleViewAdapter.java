@@ -13,25 +13,25 @@ import su.litvak.chromecast.api.v2.ChromeCast;
 import su.litvak.chromecast.api.v2.ChromeCasts;
 
 /**
+ * Allows us to populate the Recycle View that shows the list of chromecasts.
+ *
  * @author Scott Albertine
  */
 public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<ChromecastRecycleViewAdapter.ChromecastViewHolder> {
 
-	public ChromecastViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-		ConstraintLayout layout = (ConstraintLayout) LayoutInflater.from(parent.getContext())
-																   .inflate(R.layout.chromecast_entry, parent, false);
+	public ChromecastViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+		ConstraintLayout layout = (ConstraintLayout) LayoutInflater.from(viewGroup.getContext())
+																   .inflate(R.layout.chromecast_entry, viewGroup, false);
 		return new ChromecastViewHolder(layout);
 	}
 
-	public void onBindViewHolder(final ChromecastViewHolder holder, final int position) {
-		final ChromeCast chromecast = ChromeCasts.get().get(position);
-		holder.nameView.setText(chromecast.getTitle());
-		holder.nameView.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent(holder.layout.getContext(), NowPlayingActivity.class);
-				intent.putExtra("com.example.whatsplaying.ccIndex", position);
-				holder.layout.getContext().startActivity(intent);
-			}
+	public void onBindViewHolder(ChromecastViewHolder vh, int i) {
+		ChromeCast chromecast = ChromeCasts.get().get(i);
+		vh.nameView.setText(chromecast.getTitle());
+		vh.nameView.setOnClickListener((View v) -> {
+			Intent intent = new Intent(vh.layout.getContext(), NowPlayingActivity.class);
+			intent.putExtra("com.example.whatsplaying.ccIndex", i);
+			vh.layout.getContext().startActivity(intent);
 		});
 	}
 
@@ -39,10 +39,20 @@ public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<Chromecas
 		return ChromeCasts.get().size();
 	}
 
+	/**
+	 * Holds a chromecast view, so we can easily access the parts of it.
+	 */
 	public static class ChromecastViewHolder extends RecyclerView.ViewHolder {
+		/** The main layout of the chromecast view. */
 		public ConstraintLayout layout;
+		/** The name view of the chromecast. */
 		public TextView nameView;
 
+		/**
+		 * Create a new chromecast view holder, for the given constraint layout that holds one chromecast entry.
+		 *
+		 * @param layout duh
+		 */
 		public ChromecastViewHolder(ConstraintLayout layout) {
 			super(layout);
 			this.layout = layout;
