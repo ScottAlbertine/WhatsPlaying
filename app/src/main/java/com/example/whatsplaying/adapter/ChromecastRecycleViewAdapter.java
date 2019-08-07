@@ -23,7 +23,7 @@ public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<Chromecas
 	}
 
 	public void chromeCastRemoved(ChromeCast chromeCast) {
-		notifyItemRemoved(ChromeCasts.get().indexOf(chromeCast));
+		notifyDataSetChanged();
 	}
 
 	public ChromecastViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
