@@ -11,20 +11,11 @@ import com.example.whatsplaying.R;
 import com.example.whatsplaying.activity.NowPlayingActivity;
 import su.litvak.chromecast.api.v2.ChromeCast;
 import su.litvak.chromecast.api.v2.ChromeCasts;
-import su.litvak.chromecast.api.v2.ChromeCastsListener;
 
 /**
  * @author Scott Albertine
  */
-public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<ChromecastRecycleViewAdapter.ChromecastViewHolder> implements ChromeCastsListener {
-
-	public void newChromeCastDiscovered(ChromeCast chromeCast) {
-		notifyItemInserted(ChromeCasts.get().indexOf(chromeCast));
-	}
-
-	public void chromeCastRemoved(ChromeCast chromeCast) {
-		notifyDataSetChanged();
-	}
+public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<ChromecastRecycleViewAdapter.ChromecastViewHolder> {
 
 	public ChromecastViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 		ConstraintLayout layout = (ConstraintLayout) LayoutInflater.from(parent.getContext())

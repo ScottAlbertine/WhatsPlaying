@@ -8,7 +8,9 @@ import android.support.v7.widget.RecyclerView;
 import com.example.whatsplaying.R;
 import com.example.whatsplaying.Utils;
 import com.example.whatsplaying.adapter.ChromecastRecycleViewAdapter;
+import su.litvak.chromecast.api.v2.ChromeCast;
 import su.litvak.chromecast.api.v2.ChromeCasts;
+import su.litvak.chromecast.api.v2.ChromeCastsListener;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -19,7 +21,7 @@ import java.nio.ByteOrder;
 /**
  * @author Scott Albertine
  */
-public class ListChromecastsActivity extends AppCompatActivity {
+public class ListChromecastsActivity extends AppCompatActivity implements ChromeCastsListener {
 
 	private RecyclerView chromecastRecyclerView;
 	private ChromecastRecycleViewAdapter adapter;
@@ -40,22 +42,31 @@ public class ListChromecastsActivity extends AppCompatActivity {
 		adapter = new ChromecastRecycleViewAdapter();
 		chromecastRecyclerView.setAdapter(adapter);
 
-		ChromeCasts.registerListener(adapter);
-
-	}
-
-	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
-
-		//no networking on main thread
-		Utils.runInNewThread(new Runnable() {
+		ChromeCasts.registerListener(this);
+		Utils.runInNewThread(new Runnable() { //no networking on main thread
 			public void run() {
 				try {
 					ChromeCasts.startDiscovery(getMyIp());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+			}
+		});
+	}
+
+	public void newChromeCastDiscovered(ChromeCast chromeCast) {
+		final int index = ChromeCasts.get().indexOf(chromeCast);
+		runOnUiThread(new Runnable() {
+			public void run() {
+				adapter.notifyItemInserted(index);
+			}
+		});
+	}
+
+	public void chromeCastRemoved(ChromeCast chromeCast) {
+		runOnUiThread(new Runnable() {
+			public void run() {
+				adapter.notifyDataSetChanged();
 			}
 		});
 	}
