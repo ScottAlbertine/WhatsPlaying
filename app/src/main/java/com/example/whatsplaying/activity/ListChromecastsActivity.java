@@ -6,17 +6,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import com.example.whatsplaying.R;
-import com.example.whatsplaying.Utils;
 import com.example.whatsplaying.adapter.ChromecastRecycleViewAdapter;
 import su.litvak.chromecast.api.v2.ChromeCast;
 import su.litvak.chromecast.api.v2.ChromeCasts;
 import su.litvak.chromecast.api.v2.ChromeCastsListener;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
+
+import static com.example.whatsplaying.util.Utils.networkSafe;
 
 /**
  * @author Scott Albertine
@@ -43,13 +43,7 @@ public class ListChromecastsActivity extends AppCompatActivity implements Chrome
 		chromecastRecyclerView.setAdapter(adapter);
 
 		ChromeCasts.registerListener(this);
-		Utils.runInNewThread(() -> { //no networking on main thread
-			try {
-				ChromeCasts.startDiscovery(getMyIp());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
+		networkSafe(() -> ChromeCasts.startDiscovery(getMyIp())); //no networking on main thread
 	}
 
 	public void newChromeCastDiscovered(ChromeCast chromeCast) {

@@ -30,7 +30,7 @@ public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<Chromecas
 		vh.nameView.setText(chromecast.getTitle());
 		vh.nameView.setOnClickListener((View v) -> {
 			Intent intent = new Intent(vh.layout.getContext(), NowPlayingActivity.class);
-			intent.putExtra("com.example.whatsplaying.ccIndex", i);
+			intent.putExtra(NowPlayingActivity.INDEX_KEY, i);
 			vh.layout.getContext().startActivity(intent);
 		});
 	}

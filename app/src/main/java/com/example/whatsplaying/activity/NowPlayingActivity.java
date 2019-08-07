@@ -11,13 +11,11 @@ import com.bumptech.glide.Glide;
 import com.example.whatsplaying.R;
 import su.litvak.chromecast.api.v2.*;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.example.whatsplaying.Utils.runInNewThread;
+import static com.example.whatsplaying.util.Utils.networkSafe;
 
 /**
  * Shows what's playing on a given chromecast.
@@ -59,43 +57,29 @@ public class NowPlayingActivity extends AppCompatActivity {
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 		goFullscreen();
-		runInNewThread(() -> {
-			try {
-				chromecast.connect();
-				chromecast.registerListener((ChromeCastSpontaneousEvent event) -> {
-					switch (event.getType()) {
-						case MEDIA_STATUS:
-							showMediaStatus((MediaStatus) event.getData());
-							break;
-						case STATUS:
-							showStatus((Status) event.getData());
-							break;
-						case APPEVENT:
-							break;
-						case CLOSE:
-							break;
-						case UNKNOWN:
-							break;
-					}
-				});
-				showMediaStatus(chromecast.getMediaStatus()); //initial population
-				showStatus(chromecast.getStatus());
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (GeneralSecurityException e) {
-				e.printStackTrace();
-			}
+		networkSafe(() -> {
+			chromecast.connect();
+			chromecast.registerListener((ChromeCastSpontaneousEvent event) -> {
+				switch (event.getType()) {
+					case MEDIA_STATUS:
+						showMediaStatus((MediaStatus) event.getData());
+						break;
+					case STATUS:
+						showStatus((Status) event.getData());
+						break;
+					case APPEVENT:
+					case CLOSE:
+					case UNKNOWN:
+						break;
+				}
+			});
+			showMediaStatus(chromecast.getMediaStatus()); //initial population
+			showStatus(chromecast.getStatus());
 		});
 
 		//For now, this seems to fix the "chromecast won't notify us of media info" problem
 		//TODO: figure out a better way to do this so we don't have to tap on the screen
-		volumeBar.setOnClickListener((View v) -> runInNewThread(() -> {
-			try {
-				showMediaStatus(chromecast.getMediaStatus());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}));
+		volumeBar.setOnClickListener((View v) -> networkSafe(() -> showMediaStatus(chromecast.getMediaStatus())));
 	}
 
 	/**
