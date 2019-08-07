@@ -8,6 +8,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.example.whatsplaying.R;
+import com.example.whatsplaying.Utils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import su.litvak.chromecast.api.v2.*;
 
 import java.io.IOException;
@@ -16,20 +18,22 @@ import java.util.Map;
 
 public class NowPlayingActivity extends AppCompatActivity {
 
+	ObjectMapper objectMapper = Utils.createJSONMapper();
+
 	private ImageView albumArtView;
 	private TextView artistNameView;
 	private TextView trackNameView;
 	private ProgressBar seekBar;
 	private ProgressBar volumeBar;
 
-	private ChromeCast castApi;
+	private ChromeCast chromecast;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		String ip = getIntent().getExtras().getString("ip");
-		castApi = new ChromeCast(ip);
+		int index = getIntent().getExtras().getInt("com.example.whatsplaying.ccIndex");
+		chromecast = ChromeCasts.get().get(index);
 
 		setContentView(R.layout.now_playing);
 
@@ -56,25 +60,39 @@ public class NowPlayingActivity extends AppCompatActivity {
 											| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 											| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 		//this is ghetto as hell but it should work, we can make a much nicer version once it's functional
-		new Thread(new Runnable() {
+		Utils.runInNewThread(new Runnable() {
 			public void run() {
 				try {
-					castApi.connect();
-					castApi.registerListener(new ChromeCastSpontaneousEventListener() {
+					chromecast.connect();
+					chromecast.registerListener(new ChromeCastSpontaneousEventListener() {
 						public void spontaneousEventReceived(ChromeCastSpontaneousEvent event) {
-							if (event.getType().getDataClass().equals(MediaStatus.class)) {
-								showMediaStatus((MediaStatus) event.getData());
+							ChromeCastSpontaneousEvent.SpontaneousEventType type = event.getType();
+							switch (type) {
+								case MEDIA_STATUS:
+									showMediaStatus((MediaStatus) event.getData());
+									break;
+								case STATUS:
+									break;
+								case APPEVENT:
+									break;
+								case CLOSE:
+									break;
+								case UNKNOWN:
+									//We also get Device objects in here, though they're not parsed correctly, that's how we see volume changes, handle them accordingly
+									//BetterResponse response = objectMapper.treeToValue((TreeNode) event.getData(), BetterResponse.class);
+									break;
 							}
 						}
 					});
-					showMediaStatus(castApi.getMediaStatus()); //initial population
+					showMediaStatus(chromecast.getMediaStatus()); //initial population
+					showVolume(chromecast.getStatus().volume);
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (GeneralSecurityException e) {
 					e.printStackTrace();
 				}
 			}
-		}).start();
+		});
 	}
 
 	public void showMediaStatus(final MediaStatus mediaStatus) {
@@ -98,12 +116,18 @@ public class NowPlayingActivity extends AppCompatActivity {
 							albumArtView.setImageURI(Uri.parse((String) images.get(0).get("url")));
 						}
 						*/
-						//volumeBar.setProgress(mediaStatus.media.
 						seekBar.setProgress((int) ((mediaStatus.currentTime / media.duration) * 100));
 					}
 				}
 			}
 		});
+	}
 
+	public void showVolume(final Volume volume) {
+		runOnUiThread(new Runnable() {
+			public void run() {
+				volumeBar.setProgress((int) (volume.level * 100));
+			}
+		});
 	}
 }

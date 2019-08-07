@@ -9,21 +9,22 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import com.example.whatsplaying.R;
 import com.example.whatsplaying.activity.NowPlayingActivity;
-import com.example.whatsplaying.dto.Chromecast;
-
-import java.util.ArrayList;
-import java.util.List;
+import su.litvak.chromecast.api.v2.ChromeCast;
+import su.litvak.chromecast.api.v2.ChromeCasts;
+import su.litvak.chromecast.api.v2.ChromeCastsListener;
 
 /**
  * @author Scott Albertine
  */
-public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<ChromecastRecycleViewAdapter.ChromecastViewHolder> {
+public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<ChromecastRecycleViewAdapter.ChromecastViewHolder> implements ChromeCastsListener {
 
-	private List<Chromecast> chromecasts = new ArrayList<>();
+	public void newChromeCastDiscovered(ChromeCast chromeCast) {
+		//TODO: this might need to be on the ui thread?
+		notifyItemInserted(ChromeCasts.get().indexOf(chromeCast));
+	}
 
-	public void addChromecast(Chromecast chromeCast) {
-		chromecasts.add(chromeCast);
-		notifyItemInserted(chromecasts.size() - 1);
+	public void chromeCastRemoved(ChromeCast chromeCast) {
+		notifyItemRemoved(ChromeCasts.get().indexOf(chromeCast));
 	}
 
 	@Override
@@ -34,20 +35,20 @@ public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<Chromecas
 	}
 
 	@Override
-	public void onBindViewHolder(final ChromecastViewHolder holder, int position) {
-		final Chromecast chromecast = chromecasts.get(position);
-		holder.nameView.setText(chromecast.name);
+	public void onBindViewHolder(final ChromecastViewHolder holder, final int position) {
+		final ChromeCast chromecast = ChromeCasts.get().get(position);
+		holder.nameView.setText(chromecast.getTitle());
 		holder.nameView.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				Intent intent = new Intent(holder.layout.getContext(), NowPlayingActivity.class);
-				intent.putExtra("ip", chromecast.ip.getHostAddress());
+				intent.putExtra("com.example.whatsplaying.ccIndex", position);
 				holder.layout.getContext().startActivity(intent);
 			}
 		});
 	}
 
 	public int getItemCount() {
-		return chromecasts.size();
+		return ChromeCasts.get().size();
 	}
 
 	public static class ChromecastViewHolder extends RecyclerView.ViewHolder {
