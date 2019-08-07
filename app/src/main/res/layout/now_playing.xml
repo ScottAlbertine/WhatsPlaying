@@ -9,53 +9,74 @@
 											 android:id="@+id/mainLayout">
 	<ImageView
 			android:layout_width="0dp"
-			android:layout_height="0dp" app:srcCompat="@mipmap/sampleart"
+			android:layout_height="0dp"
 			android:id="@+id/albumArt"
 			android:contentDescription="@string/albumArt"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toTopOf="parent"
 			app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintDimensionRatio="1:1"
-	/>
+			app:layout_constraintDimensionRatio="1:1"/>
 	<TextView
-			android:text="@string/trackName"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:id="@+id/trackName"
+			android:layout_height="wrap_content"
+			android:id="@+id/trackName"
+			android:layout_marginEnd="8dp"
+			android:fontFamily="sans-serif-medium"
+			android:textSize="75sp"
+			android:textColor="#FFFFFF"
+			android:layout_marginStart="8dp"
+			android:layout_marginTop="8dp"
+			android:shadowColor="#000000"
+			android:shadowRadius="10"
+			android:shadowDy="0"
+			android:shadowDx="0"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toTopOf="parent"
-			app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="8dp"
-			android:fontFamily="sans-serif-medium" android:textSize="75sp" android:textColor="#FFFFFF"
-			app:layout_constraintHorizontal_bias="0.0" android:layout_marginStart="8dp" android:layout_marginTop="8dp"
-			android:shadowColor="#000000" android:shadowRadius="10" android:shadowDy="0" android:shadowDx="0"/>
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintHorizontal_bias="0.0"/>
 	<ProgressBar
 			android:layout_width="0dp"
 			android:layout_height="0dp"
 			android:id="@+id/volumeBar"
 			android:layout_marginTop="8dp"
-			app:layout_constraintTop_toBottomOf="@+id/trackName" android:layout_marginBottom="8dp"
-			app:layout_constraintBottom_toTopOf="@+id/artistName" app:layout_constraintEnd_toEndOf="parent"
+			android:layout_marginBottom="8dp"
+			android:layout_marginStart="8dp"
 			android:layout_marginEnd="8dp"
 			android:progress="84"
+			android:progressDrawable="@drawable/volume_knob"
+			app:layout_constraintStart_toEndOf="@+id/albumArt"
+			app:layout_constraintTop_toBottomOf="@+id/trackName"
+			app:layout_constraintBottom_toTopOf="@+id/artistName"
+			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintDimensionRatio="1:1"
-			android:progressDrawable="@drawable/volume_knob" style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-			app:layout_constraintStart_toEndOf="@+id/albumArt" android:layout_marginStart="8dp"/>
+			style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
 	<TextView
-			android:text="@string/artistName"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:id="@+id/artistName" android:layout_marginStart="8dp"
-			app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-			android:layout_marginEnd="8dp" android:fontFamily="sans-serif-medium" android:textSize="50sp"
-			android:layout_marginBottom="8dp" app:layout_constraintBottom_toTopOf="@+id/seekBar"
-			app:layout_constraintHorizontal_bias="0.0" android:textColor="#FFFFFF" android:shadowDx="0"
-			android:shadowDy="0" android:shadowRadius="10" android:shadowColor="#000000"/>
+			android:id="@+id/artistName"
+			android:layout_marginStart="8dp"
+			android:layout_marginEnd="8dp"
+			android:fontFamily="sans-serif-medium"
+			android:textSize="50sp"
+			android:layout_marginBottom="8dp"
+			android:textColor="#FFFFFF"
+			android:shadowDx="0"
+			android:shadowDy="0"
+			android:shadowRadius="10"
+			android:shadowColor="#000000"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintBottom_toTopOf="@+id/seekBar"
+			app:layout_constraintHorizontal_bias="0.0"/>
 	<ProgressBar
 			style="?android:attr/progressBarStyleHorizontal"
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:id="@+id/seekBar"
+			android:layout_marginBottom="8dp"
+			android:progressTint="#ffffff"
 			app:layout_constraintStart_toStartOf="parent"
-			android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"
-			app:layout_constraintEnd_toEndOf="parent" android:progress="95" android:progressTint="#ffffff"/>
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"/>
 
 </android.support.constraint.ConstraintLayout>
