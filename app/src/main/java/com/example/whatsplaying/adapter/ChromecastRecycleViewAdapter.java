@@ -19,7 +19,6 @@ import su.litvak.chromecast.api.v2.ChromeCastsListener;
 public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<ChromecastRecycleViewAdapter.ChromecastViewHolder> implements ChromeCastsListener {
 
 	public void newChromeCastDiscovered(ChromeCast chromeCast) {
-		//TODO: this might need to be on the ui thread?
 		notifyItemInserted(ChromeCasts.get().indexOf(chromeCast));
 	}
 
@@ -27,14 +26,12 @@ public class ChromecastRecycleViewAdapter extends RecyclerView.Adapter<Chromecas
 		notifyItemRemoved(ChromeCasts.get().indexOf(chromeCast));
 	}
 
-	@Override
 	public ChromecastViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 		ConstraintLayout layout = (ConstraintLayout) LayoutInflater.from(parent.getContext())
 																   .inflate(R.layout.chromecast_entry, parent, false);
 		return new ChromecastViewHolder(layout);
 	}
 
-	@Override
 	public void onBindViewHolder(final ChromecastViewHolder holder, final int position) {
 		final ChromeCast chromecast = ChromeCasts.get().get(position);
 		holder.nameView.setText(chromecast.getTitle());

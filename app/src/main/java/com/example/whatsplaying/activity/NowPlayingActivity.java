@@ -7,18 +7,17 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import com.bumptech.glide.Glide;
 import com.example.whatsplaying.R;
 import com.example.whatsplaying.Utils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import su.litvak.chromecast.api.v2.*;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.List;
 import java.util.Map;
 
 public class NowPlayingActivity extends AppCompatActivity {
-
-	ObjectMapper objectMapper = Utils.createJSONMapper();
 
 	private ImageView albumArtView;
 	private TextView artistNameView;
@@ -59,33 +58,30 @@ public class NowPlayingActivity extends AppCompatActivity {
 											| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 											| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 											| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-		//this is ghetto as hell but it should work, we can make a much nicer version once it's functional
 		Utils.runInNewThread(new Runnable() {
 			public void run() {
 				try {
 					chromecast.connect();
 					chromecast.registerListener(new ChromeCastSpontaneousEventListener() {
 						public void spontaneousEventReceived(ChromeCastSpontaneousEvent event) {
-							ChromeCastSpontaneousEvent.SpontaneousEventType type = event.getType();
-							switch (type) {
+							switch (event.getType()) {
 								case MEDIA_STATUS:
 									showMediaStatus((MediaStatus) event.getData());
 									break;
 								case STATUS:
+									showStatus((Status) event.getData());
 									break;
 								case APPEVENT:
 									break;
 								case CLOSE:
 									break;
 								case UNKNOWN:
-									//We also get Device objects in here, though they're not parsed correctly, that's how we see volume changes, handle them accordingly
-									//BetterResponse response = objectMapper.treeToValue((TreeNode) event.getData(), BetterResponse.class);
 									break;
 							}
 						}
 					});
 					showMediaStatus(chromecast.getMediaStatus()); //initial population
-					showVolume(chromecast.getStatus().volume);
+					showStatus(chromecast.getStatus());
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (GeneralSecurityException e) {
@@ -110,12 +106,16 @@ public class NowPlayingActivity extends AppCompatActivity {
 						if (artist != null) {
 							artistNameView.setText(artist);
 						}
-						/*
 						List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
 						if (images != null) {
-							albumArtView.setImageURI(Uri.parse((String) images.get(0).get("url")));
+							Map<String, Object> image = images.get(0);
+							if (image != null) {
+								String url = (String) image.get("url");
+								if (url != null) {
+									Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
+								}
+							}
 						}
-						*/
 						seekBar.setProgress((int) ((mediaStatus.currentTime / media.duration) * 100));
 					}
 				}
@@ -123,10 +123,10 @@ public class NowPlayingActivity extends AppCompatActivity {
 		});
 	}
 
-	public void showVolume(final Volume volume) {
+	public void showStatus(final Status status) {
 		runOnUiThread(new Runnable() {
 			public void run() {
-				volumeBar.setProgress((int) (volume.level * 100));
+				volumeBar.setProgress((int) (status.volume.level * 100));
 			}
 		});
 	}
