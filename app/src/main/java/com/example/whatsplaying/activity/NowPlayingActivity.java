@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
 import static com.example.whatsplaying.util.Utils.networkSafe;
 
 /**
@@ -35,6 +36,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private ProgressBar volumeBar;
 
 	private ChromeCast chromecast;
+	private String lastAppId;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +67,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 						showMediaStatus((MediaStatus) event.getData());
 						break;
 					case STATUS:
-						showStatus((Status) event.getData());
+						handleStatusUpdate((Status) event.getData());
 						break;
 					case APPEVENT:
 					case CLOSE:
@@ -73,13 +75,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 						break;
 				}
 			});
-			showMediaStatus(chromecast.getMediaStatus()); //initial population
-			showStatus(chromecast.getStatus());
+			handleStatusUpdate(chromecast.getStatus()); //initial population
 		});
-
-		//For now, this seems to fix the "chromecast won't notify us of media info" problem
-		//TODO: figure out a better way to do this so we don't have to tap on the screen
-		volumeBar.setOnClickListener((View v) -> networkSafe(() -> showMediaStatus(chromecast.getMediaStatus())));
 	}
 
 	/**
@@ -99,52 +96,80 @@ public class NowPlayingActivity extends AppCompatActivity {
 	}
 
 	/**
+	 * Handle a status update from the chromecast, happens when someone changes which app is running, or the volume.
+	 *
+	 * @param status duh
+	 */
+	private void handleStatusUpdate(Status status) {
+		runOnUiThread(() -> {
+			Application currentApp = status.getRunningApp();
+			String currentAppId = (currentApp == null) ? null : currentApp.id; //null safe check of running app id
+			if (!Objects.equals(currentAppId, lastAppId)) { //detect app change
+				//noinspection VariableNotUsedInsideIf on purpose
+				if (currentAppId == null) { //app closing, turn off the screen.
+					clearScreen();
+				} else { //app starting, turn on the screen and query the media info for prompt response
+					networkSafe(() -> showMediaStatus(chromecast.getMediaStatus()));
+				}
+				//save off the current app id so we don't do this again next time
+				lastAppId = currentAppId;
+			}
+			//and of course show the new status on screen even if we're not in a new app
+			volumeBar.setProgress((int) (status.volume.level * 100));
+		});
+	}
+
+	private void clearScreen() {
+		runOnUiThread(() -> {
+			getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
+			trackNameView.setText("");
+			artistNameView.setText("");
+			albumArtView.setImageDrawable(null);
+			seekBar.setProgress(0);
+		});
+	}
+
+	/**
 	 * Update the UI to show the given media status.
 	 *
 	 * @param mediaStatus duh
 	 */
 	private void showMediaStatus(MediaStatus mediaStatus) {
 		runOnUiThread(() -> {
-			Media media = mediaStatus.media;
-			if (media != null) { //we often get partial objects, only use the parts we get.
-				if (media.duration != null) {
-					//noinspection NumericCastThatLosesPrecision On purpose
-					seekBar.setProgress((int) ((mediaStatus.currentTime / media.duration) * 100));
-				}
-				Map<String, Object> metadata = media.metadata;
-				if (metadata != null) {
-					CharSequence title = (CharSequence) metadata.get("title");
-					if (title != null) {
-						trackNameView.setText(title);
+			getWindow().addFlags(FLAG_KEEP_SCREEN_ON);
+			if (mediaStatus != null) {
+				Media media = mediaStatus.media;
+				if (media != null) { //we often get partial objects, only use the parts we get.
+					Double duration = media.duration;
+					if (duration != null) {
+						//noinspection NumericCastThatLosesPrecision On purpose
+						seekBar.setProgress((int) ((mediaStatus.currentTime / duration) * 100));
 					}
-					CharSequence artist = (CharSequence) metadata.get("artist");
-					if (artist != null) {
-						artistNameView.setText(artist);
-					}
-					//TODO: check this cast, and the others, write the really annoying if/then blocks we need
-					//noinspection unchecked
-					List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
-					if (images != null) {
-						Map<String, Object> image = images.get(0);
-						if (image != null) {
-							String url = (String) image.get("url");
-							if (url != null) {
-								Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
+					Map<String, Object> metadata = media.metadata;
+					if (metadata != null) {
+						CharSequence title = (CharSequence) metadata.get("title");
+						if (title != null) {
+							trackNameView.setText(title);
+						}
+						CharSequence artist = (CharSequence) metadata.get("artist");
+						if (artist != null) {
+							artistNameView.setText(artist);
+						}
+						//TODO: check this cast, and the others, write the really annoying if/then blocks we need
+						//noinspection unchecked
+						List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
+						if (images != null) {
+							Map<String, Object> image = images.get(0);
+							if (image != null) {
+								String url = (String) image.get("url");
+								if (url != null) {
+									Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
+								}
 							}
 						}
 					}
 				}
 			}
 		});
-	}
-
-	/**
-	 * Update the UI to show the given device status.
-	 *
-	 * @param status duh
-	 */
-	private void showStatus(Status status) {
-		//noinspection NumericCastThatLosesPrecision On purpose
-		runOnUiThread(() -> volumeBar.setProgress((int) (status.volume.level * 100)));
 	}
 }
