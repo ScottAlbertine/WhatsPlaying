@@ -47,7 +47,7 @@ public class ListChromecastsActivity extends AppCompatActivity implements Chrome
 	}
 
 	public void newChromeCastDiscovered(ChromeCast chromeCast) {
-		runOnUiThread(() -> adapter.notifyItemInserted(ChromeCasts.get().indexOf(chromeCast)));
+		runOnUiThread(adapter::notifyDataSetChanged);
 	}
 
 	public void chromeCastRemoved(ChromeCast chromeCast) {
