@@ -3,6 +3,7 @@ package com.example.whatsplaying.activity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.example.whatsplaying.util.Utils.MILLISECONDS_PER_SECOND;
 import static com.example.whatsplaying.util.Utils.runInBackground;
 
 /**
@@ -28,10 +30,12 @@ import static com.example.whatsplaying.util.Utils.runInBackground;
  */
 public class NowPlayingActivity extends AppCompatActivity implements ChromeCastSpontaneousEventListener {
 
-	//TODO: duration should auto update as it scrolls per second
-
 	/** The key to use, in the intent's extras, to pass the numeric index of the chromecast we want to show. */
 	public static final String INDEX_KEY = "com.example.whatsplaying.ccIndex";
+	/** Number of stops on the progress bar. */
+	private static final int SEEK_BAR_RESOLUTION = 1000;
+	/** Number of milliseconds to wait between seek bar updates. */
+	private static final int SEEK_BAR_UPDATE_FREQUENCY = 250;
 
 	private ImageView albumArtView;
 	private TextView artistNameView;
@@ -41,6 +45,11 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 
 	private ChromeCast chromecast;
 	private String lastAppId;
+	private MediaStatus.PlayerState playerState;
+	private double duration;
+	private double currentTime;
+
+	private Handler seekBarUpdater;
 
 	private PowerManager.WakeLock wakeLock;
 
@@ -65,6 +74,9 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 
 		goFullscreen();
 
+		seekBarUpdater = new Handler();
+		updateSeekBar(); //start the seek bar updating, it'll keep going on its own
+
 		runInBackground(() -> {
 			chromecast.connect();
 			chromecast.registerListener(this);
@@ -86,6 +98,19 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 											| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
 											| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
 											| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+	}
+
+	/**
+	 * If the chromecast is playing, move the seek bar on our side without having to check on its progress constantly.
+	 * Update it at the given frequency, by 1/frequency seconds.
+	 * Each update queues up the next one, at the appropriate time, you only ever need to call this once, and it'll keep going forever.
+	 */
+	private void updateSeekBar() {
+		if (playerState == MediaStatus.PlayerState.PLAYING) {
+			currentTime += SEEK_BAR_UPDATE_FREQUENCY / MILLISECONDS_PER_SECOND; //increase it by however long it's been since we last ran.
+			showDuration();
+		}
+		seekBarUpdater.postDelayed(this::updateSeekBar, SEEK_BAR_UPDATE_FREQUENCY);
 	}
 
 	public void spontaneousEventReceived(ChromeCastSpontaneousEvent event) {
@@ -138,6 +163,8 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 			artistNameView.setText("");
 			albumArtView.setImageDrawable(null);
 			seekBar.setProgress(0);
+			currentTime = 0.0; //stop the seek bar updater from using old data, just in case.
+			duration = 0.0;
 		});
 	}
 
@@ -147,17 +174,20 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 	 * @param mediaStatus duh
 	 */
 	private void showMediaStatus(MediaStatus mediaStatus) {
-		if (mediaStatus == null) {
-			return;
-		}
-		Media media = mediaStatus.media;
-		if (media == null) {
-			return;
-		}
 		runOnUiThread(() -> {
-			Double duration = media.duration;
-			if (duration != null) {
-				showDuration(mediaStatus.currentTime, duration);
+			if (mediaStatus == null) {
+				return;
+			}
+			playerState = mediaStatus.playerState; //always save it, even if it's null
+			currentTime = mediaStatus.currentTime; //will never be null, we can always save it
+			Media media = mediaStatus.media;
+			if (media == null) {
+				return;
+			}
+			Double mediaDuration = media.duration;
+			if (mediaDuration != null) {
+				duration = mediaDuration; //save it off so we can show it
+				showDuration();
 			}
 			Map<String, Object> metadata = media.metadata;
 			if (metadata != null) {
@@ -166,11 +196,21 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 		});
 	}
 
-	private void showDuration(double currentTime, Double duration) {
+	/**
+	 * Show the duration currently saved in this activity, on the seek bar.
+	 */
+	private void showDuration() {
 		//noinspection NumericCastThatLosesPrecision On purpose
-		seekBar.setProgress((int) ((currentTime / duration) * 100));
+		seekBar.setMax((int) (duration * SEEK_BAR_RESOLUTION)); //make the seek bar have 1000 stops instead of the regular 100
+		//noinspection NumericCastThatLosesPrecision On purpose
+		seekBar.setProgress((int) (currentTime * SEEK_BAR_RESOLUTION));
 	}
 
+	/**
+	 * Show the given media metadata.
+	 *
+	 * @param metadata duh
+	 */
 	private void showMediaMetadata(Map<String, Object> metadata) {
 		CharSequence title = (CharSequence) metadata.get("title");
 		//don't set it if it's set already, this causes the marquee to twitch
