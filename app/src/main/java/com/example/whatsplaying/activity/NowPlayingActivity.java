@@ -28,6 +28,8 @@ import static com.example.whatsplaying.util.Utils.runInBackground;
  */
 public class NowPlayingActivity extends AppCompatActivity implements ChromeCastSpontaneousEventListener {
 
+	//TODO: duration should auto update as it scrolls per second
+
 	/** The key to use, in the intent's extras, to pass the numeric index of the chromecast we want to show. */
 	public static final String INDEX_KEY = "com.example.whatsplaying.ccIndex";
 
@@ -145,42 +147,51 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 	 * @param mediaStatus duh
 	 */
 	private void showMediaStatus(MediaStatus mediaStatus) {
+		if (mediaStatus == null) {
+			return;
+		}
+		Media media = mediaStatus.media;
+		if (media == null) {
+			return;
+		}
 		runOnUiThread(() -> {
-			if (mediaStatus == null) {
-				return;
-			}
-			Media media = mediaStatus.media;
-			if (media == null) { //we often get partial objects, only use the parts we get.
-				return;
-			}
 			Double duration = media.duration;
 			if (duration != null) {
-				//noinspection NumericCastThatLosesPrecision On purpose
-				seekBar.setProgress((int) ((mediaStatus.currentTime / duration) * 100));
+				showDuration(mediaStatus.currentTime, duration);
 			}
-
 			Map<String, Object> metadata = media.metadata;
 			if (metadata != null) {
-				CharSequence title = (CharSequence) metadata.get("title");
-				if (title != null) {
-					trackNameView.setText(title);
-				}
-				CharSequence artist = (CharSequence) metadata.get("artist");
-				if (artist != null) {
-					artistNameView.setText(artist);
-				}
-				//noinspection unchecked
-				List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
-				if ((images != null) && !images.isEmpty()) {
-					Map<String, Object> image = images.get(0);
-					if (image != null) {
-						String url = (String) image.get("url");
-						if (url != null) {
-							Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
-						}
-					}
-				}
+				showMediaMetadata(metadata);
 			}
 		});
+	}
+
+	private void showDuration(double currentTime, Double duration) {
+		//noinspection NumericCastThatLosesPrecision On purpose
+		seekBar.setProgress((int) ((currentTime / duration) * 100));
+	}
+
+	private void showMediaMetadata(Map<String, Object> metadata) {
+		CharSequence title = (CharSequence) metadata.get("title");
+		//don't set it if it's set already, this causes the marquee to twitch
+		if ((title != null) && !title.equals(trackNameView.getText())) {
+			trackNameView.setText(title);
+		}
+		CharSequence artist = (CharSequence) metadata.get("artist");
+		//don't set it if it's set already, this causes the marquee to twitch
+		if ((artist != null) && !artist.equals(artistNameView.getText())) {
+			artistNameView.setText(artist);
+		}
+		//noinspection unchecked
+		List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
+		if ((images != null) && !images.isEmpty()) {
+			Map<String, Object> image = images.get(0);
+			if (image != null) {
+				String url = (String) image.get("url");
+				if (url != null) {
+					Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
+				}
+			}
+		}
 	}
 }
