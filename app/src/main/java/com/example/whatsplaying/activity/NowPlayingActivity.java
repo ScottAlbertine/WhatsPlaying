@@ -146,35 +146,37 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 	 */
 	private void showMediaStatus(MediaStatus mediaStatus) {
 		runOnUiThread(() -> {
-			if (mediaStatus != null) {
-				Media media = mediaStatus.media;
-				if (media != null) { //we often get partial objects, only use the parts we get.
-					Double duration = media.duration;
-					if (duration != null) {
-						//noinspection NumericCastThatLosesPrecision On purpose
-						seekBar.setProgress((int) ((mediaStatus.currentTime / duration) * 100));
-					}
-					Map<String, Object> metadata = media.metadata;
-					if (metadata != null) {
-						CharSequence title = (CharSequence) metadata.get("title");
-						if (title != null) {
-							trackNameView.setText(title);
-						}
-						CharSequence artist = (CharSequence) metadata.get("artist");
-						if (artist != null) {
-							artistNameView.setText(artist);
-						}
-						//TODO: check this cast, and the others, write the really annoying if/then blocks we need
-						//noinspection unchecked
-						List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
-						if (images != null) {
-							Map<String, Object> image = images.get(0);
-							if (image != null) {
-								String url = (String) image.get("url");
-								if (url != null) {
-									Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
-								}
-							}
+			if (mediaStatus == null) {
+				return;
+			}
+			Media media = mediaStatus.media;
+			if (media == null) { //we often get partial objects, only use the parts we get.
+				return;
+			}
+			Double duration = media.duration;
+			if (duration != null) {
+				//noinspection NumericCastThatLosesPrecision On purpose
+				seekBar.setProgress((int) ((mediaStatus.currentTime / duration) * 100));
+			}
+
+			Map<String, Object> metadata = media.metadata;
+			if (metadata != null) {
+				CharSequence title = (CharSequence) metadata.get("title");
+				if (title != null) {
+					trackNameView.setText(title);
+				}
+				CharSequence artist = (CharSequence) metadata.get("artist");
+				if (artist != null) {
+					artistNameView.setText(artist);
+				}
+				//noinspection unchecked
+				List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
+				if ((images != null) && !images.isEmpty()) {
+					Map<String, Object> image = images.get(0);
+					if (image != null) {
+						String url = (String) image.get("url");
+						if (url != null) {
+							Glide.with(albumArtView.getContext()).load(url).into(albumArtView);
 						}
 					}
 				}
