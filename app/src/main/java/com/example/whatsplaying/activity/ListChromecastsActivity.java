@@ -23,9 +23,7 @@ import static com.example.whatsplaying.util.Utils.networkSafe;
  */
 public class ListChromecastsActivity extends AppCompatActivity implements ChromeCastsListener {
 
-	private RecyclerView chromecastRecyclerView;
 	private ChromecastRecycleViewAdapter adapter;
-	private RecyclerView.LayoutManager layoutManager;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -33,12 +31,9 @@ public class ListChromecastsActivity extends AppCompatActivity implements Chrome
 
 		setContentView(R.layout.list_chromecasts);
 
-		chromecastRecyclerView = findViewById(R.id.chromecasts_recycler_view);
+		RecyclerView chromecastRecyclerView = findViewById(R.id.chromecasts_recycler_view);
 		chromecastRecyclerView.setHasFixedSize(true);
-
-		layoutManager = new LinearLayoutManager(this);
-		chromecastRecyclerView.setLayoutManager(layoutManager);
-
+		chromecastRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 		adapter = new ChromecastRecycleViewAdapter();
 		chromecastRecyclerView.setAdapter(adapter);
 
