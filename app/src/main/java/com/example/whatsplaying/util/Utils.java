@@ -13,7 +13,7 @@ public enum Utils {
 	 *
 	 * @param r duh
 	 */
-	public static void networkSafe(RiskyRunnable r) {
+	public static void runInBackground(RiskyRunnable r) {
 		new Thread(() -> {
 			try {
 				r.run();

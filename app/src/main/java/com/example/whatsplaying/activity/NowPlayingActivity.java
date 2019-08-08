@@ -1,6 +1,9 @@
 package com.example.whatsplaying.activity;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -15,8 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-import static com.example.whatsplaying.util.Utils.networkSafe;
+import static com.example.whatsplaying.util.Utils.runInBackground;
 
 /**
  * Shows what's playing on a given chromecast.
@@ -24,7 +26,7 @@ import static com.example.whatsplaying.util.Utils.networkSafe;
  *
  * @author Scott Albertine
  */
-public class NowPlayingActivity extends AppCompatActivity {
+public class NowPlayingActivity extends AppCompatActivity implements ChromeCastSpontaneousEventListener {
 
 	/** The key to use, in the intent's extras, to pass the numeric index of the chromecast we want to show. */
 	public static final String INDEX_KEY = "com.example.whatsplaying.ccIndex";
@@ -38,9 +40,15 @@ public class NowPlayingActivity extends AppCompatActivity {
 	private ChromeCast chromecast;
 	private String lastAppId;
 
+	private PowerManager.WakeLock wakeLock;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		//noinspection deprecation There isn't a non-deprecated way to do this, and it's been deprecated for 11 api versions and not removed.
+		wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "whatsplaying:wakeup");
 
 		//get the appropriate chromecast, safely.
 		chromecast = ChromeCasts.get().get(Objects.requireNonNull(getIntent().getExtras()).getInt(INDEX_KEY));
@@ -55,22 +63,9 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 		goFullscreen();
 
-		networkSafe(() -> {
+		runInBackground(() -> {
 			chromecast.connect();
-			chromecast.registerListener((ChromeCastSpontaneousEvent event) -> {
-				switch (event.getType()) {
-					case MEDIA_STATUS:
-						showMediaStatus((MediaStatus) event.getData());
-						break;
-					case STATUS:
-						handleStatusUpdate((Status) event.getData());
-						break;
-					case APPEVENT:
-					case CLOSE:
-					case UNKNOWN:
-						break;
-				}
-			});
+			chromecast.registerListener(this);
 			handleStatusUpdate(chromecast.getStatus()); //initial population
 		});
 	}
@@ -91,32 +86,50 @@ public class NowPlayingActivity extends AppCompatActivity {
 											| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 	}
 
+	public void spontaneousEventReceived(ChromeCastSpontaneousEvent event) {
+		switch (event.getType()) {
+			case MEDIA_STATUS:
+				showMediaStatus((MediaStatus) event.getData());
+				break;
+			case STATUS:
+				handleStatusUpdate((Status) event.getData());
+				break;
+			case APPEVENT:
+			case CLOSE:
+			case UNKNOWN:
+				break;
+		}
+	}
+
 	/**
 	 * Handle a status update from the chromecast, happens when someone changes which app is running, or the volume.
 	 *
 	 * @param status duh
 	 */
+	@SuppressLint("WakelockTimeout")
 	private void handleStatusUpdate(Status status) {
-		runOnUiThread(() -> {
-			Application currentApp = status.getRunningApp();
-			String currentAppId = (currentApp == null) ? null : currentApp.id; //null safe check of running app id
-			if (!Objects.equals(currentAppId, lastAppId)) { //detect app change
-				//noinspection VariableNotUsedInsideIf on purpose
-				if (currentAppId != null) { //app starting, query and show the media info, and keep the screen on
-					getWindow().addFlags(FLAG_KEEP_SCREEN_ON);
-					networkSafe(() -> showMediaStatus(chromecast.getMediaStatus()));
-				} else { //app closing, clear the screen and let it turn off
-					clearScreen();
-					getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
-				}
-				//save off the current app id so we don't do this again next time
-				lastAppId = currentAppId;
+		Application currentApp = status.getRunningApp();
+		String currentAppId = (currentApp == null) ? null : currentApp.id; //null safe check of running app id
+		if (!Objects.equals(currentAppId, lastAppId)) { //detect app change
+			//noinspection VariableNotUsedInsideIf on purpose
+			if (currentAppId != null) { //app starting, query and show the media info, and keep the screen on
+				wakeLock.acquire();
+				runInBackground(() -> showMediaStatus(chromecast.getMediaStatus()));
+			} else { //app closing, clear the screen and let it turn off
+				clearScreen();
+				wakeLock.release();
 			}
-			//and of course show the new status on screen even if we're not in a new app
-			volumeBar.setProgress((int) (status.volume.level * 100));
-		});
+			//save off the current app id so we don't do this again next time
+			lastAppId = currentAppId;
+		}
+		//and of course show the new status on screen even if we're not in a new app
+		//noinspection NumericCastThatLosesPrecision On purpose
+		runOnUiThread(() -> volumeBar.setProgress((int) (status.volume.level * 100)));
 	}
 
+	/**
+	 * Clear the screen of everything but the volume knob.
+	 */
 	private void clearScreen() {
 		runOnUiThread(() -> {
 			trackNameView.setText("");

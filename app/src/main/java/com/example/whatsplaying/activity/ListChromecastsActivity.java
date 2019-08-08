@@ -16,7 +16,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 
-import static com.example.whatsplaying.util.Utils.networkSafe;
+import static com.example.whatsplaying.util.Utils.runInBackground;
 
 /**
  * @author Scott Albertine
@@ -38,7 +38,7 @@ public class ListChromecastsActivity extends AppCompatActivity implements Chrome
 		chromecastRecyclerView.setAdapter(adapter);
 
 		ChromeCasts.registerListener(this);
-		networkSafe(() -> ChromeCasts.startDiscovery(getMyIp())); //no networking on main thread
+		runInBackground(() -> ChromeCasts.startDiscovery(getMyIp())); //no networking on main thread
 	}
 
 	public void newChromeCastDiscovered(ChromeCast chromeCast) {
