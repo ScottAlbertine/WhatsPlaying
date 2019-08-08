@@ -53,12 +53,8 @@ public class NowPlayingActivity extends AppCompatActivity {
 		seekBar = findViewById(R.id.seekBar);
 		volumeBar = findViewById(R.id.volumeBar);
 
-	}
-
-	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
 		goFullscreen();
+
 		networkSafe(() -> {
 			chromecast.connect();
 			chromecast.registerListener((ChromeCastSpontaneousEvent event) -> {
