@@ -4,8 +4,8 @@
 		<rotate
 				android:pivotX="50%"
 				android:pivotY="50%"
-				android:fromDegrees="-90"
-				android:toDegrees="-90">
+				android:fromDegrees="90"
+				android:toDegrees="90">
 			<shape
 					android:innerRadiusRatio="2.3"
 					android:shape="ring"
