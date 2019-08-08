@@ -106,10 +106,12 @@ public class NowPlayingActivity extends AppCompatActivity {
 			String currentAppId = (currentApp == null) ? null : currentApp.id; //null safe check of running app id
 			if (!Objects.equals(currentAppId, lastAppId)) { //detect app change
 				//noinspection VariableNotUsedInsideIf on purpose
-				if (currentAppId == null) { //app closing, turn off the screen.
-					clearScreen();
-				} else { //app starting, turn on the screen and query the media info for prompt response
+				if (currentAppId != null) { //app starting, query and show the media info, and keep the screen on
+					getWindow().addFlags(FLAG_KEEP_SCREEN_ON);
 					networkSafe(() -> showMediaStatus(chromecast.getMediaStatus()));
+				} else { //app closing, clear the screen and let it turn off
+					clearScreen();
+					getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
 				}
 				//save off the current app id so we don't do this again next time
 				lastAppId = currentAppId;
@@ -121,7 +123,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 
 	private void clearScreen() {
 		runOnUiThread(() -> {
-			getWindow().clearFlags(FLAG_KEEP_SCREEN_ON);
 			trackNameView.setText("");
 			artistNameView.setText("");
 			albumArtView.setImageDrawable(null);
@@ -136,7 +137,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 	 */
 	private void showMediaStatus(MediaStatus mediaStatus) {
 		runOnUiThread(() -> {
-			getWindow().addFlags(FLAG_KEEP_SCREEN_ON);
 			if (mediaStatus != null) {
 				Media media = mediaStatus.media;
 				if (media != null) { //we often get partial objects, only use the parts we get.
