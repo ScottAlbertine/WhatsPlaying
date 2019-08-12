@@ -16,6 +16,16 @@
 			app:layout_constraintTop_toTopOf="parent"
 			app:layout_constraintBottom_toBottomOf="parent"
 			app:layout_constraintDimensionRatio="1:1"/>
+	<ImageView
+			android:layout_width="0dp"
+			android:layout_height="0dp"
+			android:id="@+id/appIcon"
+			android:contentDescription="@string/appIcon"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/trackName"
+			app:layout_constraintBottom_toTopOf="@+id/artistName"
+			app:layout_constraintEnd_toStartOf="@+id/albumArt"
+	/>
 	<TextView
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"

@@ -38,6 +38,7 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 	private static final int SEEK_BAR_UPDATE_FREQUENCY = 250;
 
 	private ImageView albumArtView;
+	private ImageView appIconView;
 	private TextView artistNameView;
 	private TextView trackNameView;
 	private ProgressBar seekBar;
@@ -67,6 +68,7 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 		setContentView(R.layout.now_playing);
 
 		albumArtView = findViewById(R.id.albumArt);
+		appIconView = findViewById(R.id.appIcon);
 		artistNameView = findViewById(R.id.artistName);
 		trackNameView = findViewById(R.id.trackName);
 		seekBar = findViewById(R.id.seekBar);
@@ -141,6 +143,8 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 			//noinspection VariableNotUsedInsideIf on purpose
 			if (currentAppId != null) { //app starting, query and show the media info, and keep the screen on
 				wakeLock.acquire();
+				//show the icon
+				runOnUiThread(() -> Glide.with(appIconView.getContext()).load(currentApp.iconUrl).into(appIconView));
 				runInBackground(() -> showMediaStatus(chromecast.getMediaStatus()));
 			} else { //app closing, clear the screen and let it turn off
 				clearScreen();
@@ -162,6 +166,7 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 			trackNameView.setText("");
 			artistNameView.setText("");
 			albumArtView.setImageDrawable(null);
+			appIconView.setImageDrawable(null);
 			seekBar.setProgress(0);
 			currentTime = 0.0; //stop the seek bar updater from using old data, just in case.
 			duration = 0.0;
@@ -212,18 +217,18 @@ public class NowPlayingActivity extends AppCompatActivity implements ChromeCastS
 	 * @param metadata duh
 	 */
 	private void showMediaMetadata(Map<String, Object> metadata) {
-		CharSequence title = (CharSequence) metadata.get("title");
+		CharSequence title = (CharSequence) metadata.get(Media.METADATA_TITLE);
 		//don't set it if it's set already, this causes the marquee to twitch
 		if ((title != null) && !title.equals(trackNameView.getText())) {
 			trackNameView.setText(title);
 		}
-		CharSequence artist = (CharSequence) metadata.get("artist");
+		CharSequence artist = (CharSequence) metadata.get(Media.METADATA_ARTIST);
 		//don't set it if it's set already, this causes the marquee to twitch
 		if ((artist != null) && !artist.equals(artistNameView.getText())) {
 			artistNameView.setText(artist);
 		}
 		//noinspection unchecked
-		List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get("images");
+		List<Map<String, Object>> images = (List<Map<String, Object>>) metadata.get(Media.METADATA_IMAGES);
 		if ((images != null) && !images.isEmpty()) {
 			Map<String, Object> image = images.get(0);
 			if (image != null) {
